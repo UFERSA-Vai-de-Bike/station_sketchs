@@ -58,7 +58,7 @@ void loop() {
 
             (Pular: coloque no código um caso que sempre retorne positivo para pegar bicicletas)
 
-            - Aviso que irá chegar a situação do usuário perante a API
+            - Aviso que irá checar a situação do usuário perante a API
             - Realiza a requisição para checar a situação do usuário passando o ID do cartão como parâmetro.
             - Independente do proximo passo mostre o resultado da requisição, será um código que indicara se:
                 - Usuário está ativo no sistema e pode pegar bicicletas.
@@ -79,7 +79,7 @@ void loop() {
             - Se a senha não foi iniciada ou está vazia:
                 - Se o teclado não receber alguma interação dentro de um período estabelecido ir para a operação 1.
             - Depois do inicio da senha:
-                - Se botão de cancelar zerar a senha que está sendo construída.
+                - Se botão de cancelar então torne vazia a senha que está sendo construída.
                 - Se botão de confirmar ir para a operação 5.
                 - Se o teclado não receber interação dentro de um período estabelecido ir para operação 5.
             - Para cada interação com o teclado:
