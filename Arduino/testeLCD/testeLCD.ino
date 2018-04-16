@@ -1,4 +1,4 @@
-/*
+                    /*
   LiquidCrystal Library - display() and noDisplay()
 
  Demonstrates the use a 16x2 LCD display.  The LiquidCrystal
@@ -42,7 +42,7 @@
 char grettings[] = "hello, world!";
 
 // initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+LiquidCrystal lcd(28, 27, 26, 25, 24, 23);
 
 void setup() {
   // set up the LCD's number of columns and rows:

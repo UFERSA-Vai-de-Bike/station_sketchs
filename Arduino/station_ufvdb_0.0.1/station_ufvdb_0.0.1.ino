@@ -1,3 +1,41 @@
+// Estação do ufersa Vai de bike v0.0.1
+
+// Primeiro passo, configurar periféricos.
+
+// Complexos: 
+
+// Ethernet SHIELD
+#include <SPI.h>
+//  O arduino faz uso do protocolo SPI para controlar sua porta ETHERNET
+#include <Ethernet.h> // Biblioteca do ETHERNET
+
+// RFID
+
+
+
+// Simples
+
+// Teclado Matricial
+
+// Visor LCD
+
+
+// Opcional (teste)
+// #include <Wire.h>
+/*
+    Os periféricos ETHERNET e RFID utilizam o mesmo protocolo (SPI)
+    e, infelizmente, não foi testado se uma mesma placa consegue
+    operar os dois ao mesmo tempo.
+    
+    Considerando a necessidade de haver outra placa dividindo o controle
+    necessitariamos de uma comunicação entre placas e para isso usaremos,
+    se necessário, o protocolo I2C.
+
+    Wire.h é a biblioteca para isso
+*/
+
+
+
 /*
 Estação do UFERSA VAI DE BIKE 
 
