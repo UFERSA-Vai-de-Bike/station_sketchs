@@ -44,10 +44,9 @@ LiquidCrystal lcd(7,6,5, 4, 3, 2);
 // VARIÁVEIS DA ETHERNET
 const byte mac[] = {0x00, 0xAB, 0xBC, 0xCD, 0xDF, 0x03}; // MAC DA ESTAÇÃO 0
 //StaticJsonBuffer<200> jsonBuffer; //  PARA MANIPULAÇÃO DE JSON
-boolean doRequest = true;
 IPAddress server(SERVER_1,SERVER_2,SERVER_3,SERVER_4); //INICIALIZANDO IP DO SERVIDOR
 EthernetClient client;
-String serverIp = "192.168.0.5";//String(""+SERVER_1 + '.' + SERVER_2 + '.' + SERVER_3 + '.' + SERVER_4);
+String serverIp = String(String(SERVER_1) + '.' + String(SERVER_2) + '.' + String(SERVER_3) + '.' + String(SERVER_4));
 
 // VARIAVEIS PORTAS DO TECLADO
 const byte rows[] = {44,45,46,47}; // linhas ARDUINO MEGA
@@ -86,7 +85,7 @@ void setup(){
   digitalWrite(LOCK_PORT,HIGH);
   Serial.begin(9600); // 9600 taxa de transferencia inicializa SERIAL
 
-  delay(1000);
+  delay(500);
   
   initializeMsg();
 }
@@ -133,88 +132,100 @@ void loop(){
 }
 
 void operation0(){
-    Serial.println("Conectando...");
-      lcd.clear();
+  Serial.println(F("Conectando..."));
+  lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Conectando...");
+  lcd.print(F("Conectando..."));
   lcd.setCursor(0,1);
-  lcd.print("Aguarde");
+  lcd.print(F("Aguarde"));
     // if you get a connection, report back via serial:
     if (openConnection()) {
       // Make a HTTP request:
-      doGetAPI("api");
-
-     // tratar conexão aqui
-      while(client.connected()) {
-        // if there are incoming bytes available
-        // from the server, read them and print them:
-        if (client.available()) {
-          char c = client.read();
-          Serial.print(c);
-          //JsonObject& root = jsonBuffer.parse(client);
-          //root.printTo(Serial);
+      if (manageRequest(F("GET"),F("/api"))){
+       // tratar conexão aqui
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print(F("GET API 200 OK"));
+        lcd.setCursor(0,1);
+        while(client.connected()) {
+          // if there are incoming bytes available
+          // from the server, read them and print them:
+          if (client.available()) {
+            char c = client.read();
+            Serial.print(c);
+            lcd.print(c);
+            //JsonObject& root = jsonBuffer.parse(client);
+            //root.printTo(Serial);
+          }
+           
         }
-         
+        state_op = 1; // trocar de operação
+        Serial.println();
+        Serial.println(F("Indo para operação 1"));
+        delay(1500);
+        
+      } else {
+        Serial.println();
+        Serial.println(F("Falha no GET principal!"));
       }
+
       
      client.stop(); // parar conexão ao tratar
-     state_op = 1; // trocar de operação
-
-     Serial.println();
-     Serial.println("Indo para operação 1");
       
     } else {
       // if you didn't get a connection to the server:
-      Serial.println("connection failed");
+      Serial.println(F("Falha de conexão"));
       
     }
 }
 
 void operation1(){
   Serial.println();    
-  Serial.println("Operação 1: Ócio");
-  Serial.println("Aperte qualquer tecla e aguarde");
+  Serial.println(F("Operação 1: Ócio"));
+  Serial.println(F("Aperte qualquer tecla e aguarde"));
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Aperta qualquer");
+  lcd.print(F("Aperte qualquer"));
   lcd.setCursor(0,1);
-  lcd.print("tecla e aguarde");
-  if (getKeyOnce() != '\0') { // enquanto não houver uma interação não entra nesse fluxo
-    state_op = 2;
-    Serial.println();
-    Serial.println("Teclado matricial excitado!");
-    Serial.println();
-    Serial.println("A Estacao 0 te saúda!");
-    Serial.println("Indo para operação 2");
-    Serial.println("Aguarde.........");
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("Ola! Bem vindo!");
-    lcd.setCursor(0,1);
-    lcd.print("Aguarde......");
-    delay(2000);
-  } else {
-    Serial.println(" Sem interação no teclado!");
+  lcd.print(F("tecla e aguarde"));
+  timestamp = millis();
+  while(getKeyOnce() == '\0') {
+    Serial.println(F(" Sem interação no teclado!"));
     if (checkTimeAwait(KEYBOARD_AWAIT)) { // passado 10 minutos
       state_op = 0; // vai para operação de 
-      Serial.println("Indo para operação 0");
-      Serial.println("Aguarde.........");
-    } else {
-      Serial.println("Tentando novamente...");
-    }
-    delay(1000); // espera um segundo para tentar de novo
+      Serial.println(F("Indo para operação 0"));
+      Serial.println(F("Aguarde........."));
+      delay(1000);
+      return;
+    } 
+    Serial.println(F("Tentando novamente..."));
+    delay(700); // espera um pouco para tentar de novo
   }
+  state_op = 2;
+
+  Serial.println();
+  Serial.println(F("Teclado matricial excitado!"));
+  Serial.println();
+  Serial.println(F("A Estacao 0 te saúda!"));
+  Serial.println(F("Indo para operação 2"));
+  Serial.println(F("Aguarde........."));
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(F("Ola! Bem vindo!"));
+  lcd.setCursor(0,1);
+  lcd.print(F("Aguarde......"));
+  delay(2000);
 }
 
 void operation2(){
   // Procura por algum cartão presente na área
   Serial.println();
-  Serial.println("Aproxime seu cartão do teclado...");
+  Serial.println(F("Aproxime seu cartão do teclado..."));
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Ponha o cartao");
+  lcd.print(F("Ponha o cartao"));
   lcd.setCursor(0,1);
-  lcd.print("perto do teclado");
+  lcd.print(F("perto do teclado"));
   timestamp = millis();
   while ( ! mfrc522.PICC_IsNewCardPresent())// função retorna boolean que é negado pela ! no começo
   {
@@ -223,11 +234,11 @@ void operation2(){
      * quebramos aqui o ciclo dando um return.
      * E assim a loop inicia outro ciclo.
     */
-    Serial.println("Cartão não detectado!");
+    Serial.println(F("Cartão não detectado!"));
     if (checkTimeAwait(RFID_AWAIT)) {
       state_op = 1;
-      Serial.println("Indo para operação 1");
-      Serial.println("Aguarde.........");
+      Serial.println(F("Indo para operação 1"));
+      Serial.println(F("Aguarde........."));
       return;  
     }
   }
@@ -238,17 +249,17 @@ void operation2(){
      * quebramos aqui o ciclo dando um return.
      * E assim a loop inicia outro ciclo.
     */
-    Serial.println("Cartão não lido!");
+    Serial.println(F("Cartão não lido!"));
     if (checkTimeAwait(RFID_AWAIT)) {
       state_op = 1;
-      Serial.println("Indo para operação 1");
-      Serial.println("Aguarde.........");
+      Serial.println(F("Indo para operação 1"));
+      Serial.println(F("Aguarde........."));
       return;  
     }
   }
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Cartao lido!");
+  lcd.print(F("Cartao lido!"));
   delay(1500);
   uidReaded = uidRead();
   mostraUID(uidReaded); // Mostrando UID no LCD
@@ -265,33 +276,33 @@ void operation3(){
 }
 void operation4(){
   Serial.println();    
-  Serial.println("Operação 4: Leitura da senha");
-  Serial.println("Aperta qualquer botão para");
+  Serial.println(F("Operação 4: Leitura da senha"));
+  Serial.println(F("Use o teclado numérico"));
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Digite sua senha");
+  lcd.print(F("Digite sua senha"));
   lcd.setCursor(0,1);
-  if (execKeypad(PASSWORD_SIZE,false)) {
+  if (execKeypad(F("Digite sua senha"),PASSWORD_SIZE,true)) {
     if (checkPass()) {
       Serial.println();    
-      Serial.println("Senha correta, fluxo terminado.");
+      Serial.println(F("Senha correta, fluxo terminado."));
       lcd.clear();
       lcd.setCursor(0,0);
-      lcd.print("Senha correta!");
+      lcd.print(F("Senha correta!"));
       state_op = 5;// proxima operação        
     } else {
       lcd.clear();
       lcd.setCursor(0,0);
-      lcd.print("Senha incorreta!");
-      Serial.println("Senha incorreta, fluxo terminado.");        
+      lcd.print(F("Senha incorreta!"));
+      Serial.println(F("Senha incorreta, fluxo terminado."));        
       state_op = 1;// proxima operação
     }
   } else {
     lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("Cancelado");
+    lcd.setCursor(0,0);
+    lcd.print(F("Cancelado"));
     Serial.println();    
-    Serial.println("Operação de teclado cancelada.");
+    Serial.println(F("Operação de teclado cancelada."));
     state_op = 1;// proxima operação    
   }
 }
@@ -301,38 +312,39 @@ void operation5(){
 }
 void operation6(){
   Serial.println();
-  Serial.println("Operação 6 - Empréstimo");
+  Serial.println(F("Operação 6 - Empréstimo"));
   // ADICIONAR PARTE DO LCD
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Liberando bike");  
+  lcd.print(F("Liberando bike"));  
   lcd.setCursor(0,1);
   digitalWrite(LOCK_PORT,LOW);
-  lcd.print("Trava aberta!");  
+  lcd.print(F("Trava aberta!"));  
   delay(5000);
   lcd.clear();
   lcd.setCursor(0,1);
-  lcd.print("Trava fechada!");  
+  lcd.print(F("Trava fechada!"));  
   digitalWrite(LOCK_PORT,HIGH);
   state_op = 1;
   delay(2000);
 }
 void initializeMsg()
 {
-  Serial.println("UFERSA VAI DE BIKE - ESTACAO 0 - INICIANDO...");
+  Serial.println(F("UFERSA VAI DE BIKE - ESTACAO 0 - INICIANDO..."));
   Serial.println();
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("UFVDB ESTACAO 0");  
+  lcd.print(F("UFVDB ESTACAO 0"));  
   lcd.setCursor(0,1);
-  lcd.print("Iniciando...");  
+  lcd.print(F("Iniciando..."));
+  delay(1000); 
 }
 
 // ethernet
 void initEthernet(){
   // iniciando a conexão ethernet:
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Falha na configuração usando DHCP");
+    Serial.println(F("Falha na configuração usando DHCP"));
     // no point in carrying on, so do nothing forevermore:
     for (;;)
       ;
@@ -345,17 +357,17 @@ void initEthernet(){
 bool openConnection(){
   Serial.println(String("Abrindo conexão com " + serverIp));
   Serial.println();
-  Serial.print(".");  
+  Serial.print(F("."));  
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Abrindo conexao...");  
+  lcd.print(F("Abrindo conexao..."));  
   lcd.setCursor(0,1);
-  lcd.print(".");
+  lcd.print(F("."));
   // tente conectar 5 vezes
   short count = 1;
   while (!client.connect(server, 3000)) {
-    lcd.print(".");
-    Serial.print("."); 
+    lcd.print(F("."));
+    Serial.print(F(".")); 
     ++count;    
     if (count == SERVER_TRY_CONNECTION) {
       Serial.println(String(serverIp + " não alcançado :("));  
@@ -363,7 +375,7 @@ bool openConnection(){
       lcd.setCursor(0,0);
       lcd.print(serverIp);
       lcd.setCursor(0,1);
-      lcd.print("nao alcancado :(");
+      lcd.print(F("nao alcancado :("));
       delay(2000);
       return false;
     }
@@ -373,40 +385,52 @@ bool openConnection(){
   lcd.setCursor(0,0);
   lcd.print(serverIp); 
   lcd.setCursor(0,1);
-  lcd.print("Conectado :)"); 
+  lcd.print(F("Conectado :)")); 
   delay(2000);
   return true;
 }
 // ethernet imprimir ip
 void printIPAddress()
 {
-  Serial.print("Meu endereço IP: ");
+  Serial.print(F("Meu endereço IP: "));
   for (byte thisByte = 0; thisByte < 4; thisByte++) {
     // print the value of each byte of the IP address:
     Serial.print(Ethernet.localIP()[thisByte], DEC);
-    Serial.print(".");
+    Serial.print(F("."));
   }
 
   Serial.println();
 }
 
-// ethernet get
-void doGetAPI(String path) {
-    client.println(String("GET " +path+ " HTTP/1.1"));
-    client.println(String("Host: " + serverIp));
-    client.println("Cache-Control: no-cache");
-    client.println("Connection: close");
-//    client.println("Connection: keep-alive");
-    client.println();
-}
-// ethernet post
-void doPostAPI(String path) {
-    client.println(String("POST "+path+" HTTP/1.1"));
-    client.println(String("Host: " + serverIp));
-    client.println("Cache-Control: no-cache");
-    client.println("Connection: close");
-//    client.println("Connection: keep-alive");
-    client.println();
+//ethernet utility to do request
+bool manageRequest(String type, String path) {
+  client.println(String(type + ' ' + path + " HTTP/1.1"));
+  client.println(String("Host: " + serverIp));
+  client.println(F("Cache-Control: no-cache"));
+  client.println(F("Connection: close"));
+//client.println("Connection: keep-alive");
+
+  if (client.println() == 0) {
+    Serial.println(F("Falha no envio da requisição"));
+    return false;
+  }
+   // Check HTTP status
+  char status[32] = {0};
+  client.readBytesUntil('\r', status, sizeof(status));
+  if (strcmp(status, "HTTP/1.1 200 OK") != 0) {
+    Serial.print(F("Resposta inesperada: "));
+    Serial.println(status);
+    return false;
+  }
+
+  // Skip HTTP headers
+  char endOfHeaders[] = "\r\n\r\n";
+  if (!client.find(endOfHeaders)) {
+    Serial.println(F("Resposta inválida!"));
+    return false;
+  }
+
+  return true;
 }
 
 
@@ -439,7 +463,7 @@ char getKey(){
 }
 
 // função para pegar qualquer input (maximo de 20)
-bool execKeypad(int input_size, bool hide){
+bool execKeypad(String msg,int input_size, bool hide){
     short index = 0;
     timestamp = millis();
     char key;
@@ -450,24 +474,24 @@ bool execKeypad(int input_size, bool hide){
                 if (index > 0) {
                     inputKeyBoard[index] = '\0';
                     Serial.println();
-                    Serial.println("Botão * pressionado: Confirmar input!");
+                    Serial.println(F("Botão * pressionado: Confirmar input!"));
                     Serial.println();
                     lcd.clear();
                     lcd.setCursor(0,0);
-                    lcd.print("* pressionado");
+                    lcd.print(F("* pressionado"));
                     lcd.setCursor(0,1);
-                    lcd.print("Confirmando...");
+                    lcd.print(F("Confirmando..."));
                     // comparar senhas
                     return true;
                 } else {
                     Serial.println();
-                    Serial.println("Botão * pressionado: Cancelando (input vazio)!");
+                    Serial.println(F("Botão * pressionado: Cancelando (input vazio)!"));
                     Serial.println();
                     lcd.clear();
                     lcd.setCursor(0,0);
-                    lcd.print("* pressionado");
+                    lcd.print(F("* pressionado"));
                     lcd.setCursor(0,1);
-                    lcd.print("Cancelando...");
+                    lcd.print(F("Cancelando..."));
                     return false;
                 }
                 break;
@@ -476,22 +500,28 @@ bool execKeypad(int input_size, bool hide){
                 if (index > 0) {
                     lcd.clear();
                     lcd.setCursor(0,0);
-                    lcd.print("# pressionado");
+                    lcd.print(F("# pressionado"));
                     lcd.setCursor(0,1);
-                    lcd.print("Resetando...");
+                    lcd.print(F("Resetando..."));
                     Serial.println();
-                    Serial.println("Botão # pressionado: Zerando input!");
+                    Serial.println(F("Botão # pressionado: Zerando input!"));
                     Serial.println();
                     index = 0;
                     inputKeyBoard[index] = '\0';
+                    delay(2000);
+                    lcd.clear();
+                    lcd.setCursor(0,0);
+                    lcd.print(msg);
+                    lcd.setCursor(0,1);
+
                 } else {
                     lcd.clear();
                     lcd.setCursor(0,0);
-                    lcd.print("# pressionado");
+                    lcd.print(F("# pressionado"));
                     lcd.setCursor(0,1);
-                    lcd.print("Cancelando...");
+                    lcd.print(F("Cancelando..."));
                     Serial.println();
-                    Serial.println("Botão # pressionado: Cancelando (input vazio)!");
+                    Serial.println(F("Botão # pressionado: Cancelando (input vazio)!"));
                     Serial.println();
                     return false;
                 }
@@ -506,7 +536,7 @@ bool execKeypad(int input_size, bool hide){
                 Serial.print(key);
                 lcd.setCursor(index,1);
                 if (hide) {
-                  lcd.print("*");
+                  lcd.print(F("*"));
                 } else {
                   lcd.print(key);  
                 }
@@ -515,11 +545,11 @@ bool execKeypad(int input_size, bool hide){
                 if (index > (input_size-1)) {
                     lcd.clear();
                     lcd.setCursor(0,0);
-                    lcd.print("    Limite");
+                    lcd.print(F("    Limite"));
                     lcd.setCursor(0,1);
-                    lcd.print("   Alcancado");
+                    lcd.print(F("   Alcancado"));
                     Serial.println();
-                    Serial.println("Limite de input alcançado!");
+                    Serial.println(F("Limite de input alcançado!"));
                     Serial.println();
                     return true;
                 }
@@ -583,9 +613,9 @@ bool checkTimeAwait(unsigned long await) {
     Serial.println(String("Tempo de espera excedido (" + await  +')'));
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.print("Tempo de espera");
+    lcd.print(F("Tempo de espera"));
     lcd.setCursor(0,1);
-    lcd.print("   excedido");
+    lcd.print(F("   excedido"));
     delay(2000);
     timestamp = millis();
     return true;
@@ -597,11 +627,10 @@ void mostraUID(String id)
 {
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("UID da tag");
-  Serial.println("UID da tag");
+  lcd.print(F("UID da tag"));
+  Serial.println(F("UID da tag"));
   lcd.setCursor(0,1);
   lcd.print(id);
   Serial.println(id);
   delay(3000);
 }
-
